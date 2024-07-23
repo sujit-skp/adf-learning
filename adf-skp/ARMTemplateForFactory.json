@@ -676,6 +676,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"fileName": "FilteredData.csv",
 						"folderPath": "outputfiles",
 						"container": "filescontaineradf"
 					},
