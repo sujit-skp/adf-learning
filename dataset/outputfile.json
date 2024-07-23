@@ -1,18 +1,18 @@
 {
-	"name": "inputFile",
+	"name": "outputfile",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "FilesStorage",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"containerName": {
+			"containername": {
 				"type": "string"
 			},
-			"folderName": {
+			"foldername": {
 				"type": "string"
 			},
-			"sourcefileName": {
+			"targetfilename": {
 				"type": "string"
 			}
 		},
@@ -22,15 +22,15 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": {
-					"value": "@dataset().sourcefileName",
+					"value": "@dataset().targetfilename",
 					"type": "Expression"
 				},
 				"folderPath": {
-					"value": "@dataset().folderName",
+					"value": "@dataset().foldername",
 					"type": "Expression"
 				},
 				"container": {
-					"value": "@dataset().containerName",
+					"value": "@dataset().containername",
 					"type": "Expression"
 				}
 			}

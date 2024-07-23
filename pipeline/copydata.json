@@ -1,6 +1,104 @@
 {
 	"name": "copydata",
 	"properties": {
+		"activities": [
+			{
+				"name": "srctotgt",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"deleteFilesAfterCompletion": false
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings",
+							"copyBehavior": "FlattenHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "inputFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"containerName": {
+								"value": "@pipeline().parameters.containerName",
+								"type": "Expression"
+							},
+							"folderName": {
+								"value": "@pipeline().parameters.srcfoldername",
+								"type": "Expression"
+							},
+							"sourcefileName": {
+								"value": "@pipeline().parameters.sourcefileName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "outputfile",
+						"type": "DatasetReference",
+						"parameters": {
+							"containername": {
+								"value": "@pipeline().parameters.containerName",
+								"type": "Expression"
+							},
+							"foldername": {
+								"value": "@pipeline().parameters.tragetfoldername",
+								"type": "Expression"
+							},
+							"targetfilename": {
+								"value": "@pipeline().parameters.targetfileName",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"containerName": {
+				"type": "string",
+				"defaultValue": "filescontaineradf"
+			},
+			"sourcefileName": {
+				"type": "string",
+				"defaultValue": "testinput.csv"
+			},
+			"targetfileName": {
+				"type": "string",
+				"defaultValue": "testoutput.csv"
+			},
+			"srcfoldername": {
+				"type": "string",
+				"defaultValue": "inputfiles"
+			},
+			"tragetfoldername": {
+				"type": "string",
+				"defaultValue": "outputfiles"
+			}
+		},
 		"annotations": []
 	}
 }
