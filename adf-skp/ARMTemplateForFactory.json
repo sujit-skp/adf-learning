@@ -1,0 +1,260 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-skp"
+		},
+		"FilesStorage_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'FilesStorage'"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/FilesStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('FilesStorage_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/GeoUnitData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/inputFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"containerName": {
+						"type": "string"
+					},
+					"folderName": {
+						"type": "string"
+					},
+					"sourcefileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().sourcefileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().folderName",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().containerName",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/copydata')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "srctotgt",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"deleteFilesAfterCompletion": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "inputFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"containerName": {
+										"value": "@pipeline().parameters.containerName",
+										"type": "Expression"
+									},
+									"folderName": {
+										"value": "@pipeline().parameters.srcfoldername",
+										"type": "Expression"
+									},
+									"sourcefileName": {
+										"value": "@pipeline().parameters.sourcefileName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "outputfile",
+								"type": "DatasetReference",
+								"parameters": {
+									"containername": {
+										"value": "@pipeline().parameters.containerName",
+										"type": "Expression"
+									},
+									"foldername": {
+										"value": "@pipeline().parameters.tragetfoldername",
+										"type": "Expression"
+									},
+									"targetfilename": {
+										"value": "@pipeline().parameters.targetfileName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"containerName": {
+						"type": "string",
+						"defaultValue": "filescontaineradf"
+					},
+					"sourcefileName": {
+						"type": "string",
+						"defaultValue": "testinput.csv"
+					},
+					"targetfileName": {
+						"type": "string",
+						"defaultValue": "testoutput.csv"
+					},
+					"srcfoldername": {
+						"type": "string",
+						"defaultValue": "inputfiles"
+					},
+					"tragetfoldername": {
+						"type": "string",
+						"defaultValue": "outputfiles"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/inputFile')]",
+				"[concat(variables('factoryId'), '/datasets/outputfile')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/outputfile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"containername": {
+						"type": "string"
+					},
+					"foldername": {
+						"type": "string"
+					},
+					"targetfilename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().targetfilename",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().foldername",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().containername",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		}
+	]
+}
