@@ -721,8 +721,10 @@
 						"          Value as string,",
 						"          Industry_code_ANZSIC06 as string",
 						"     ),",
+						"     partitionFileNames:['ManagerId100FilteredRecords'],",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> ManagerId100"
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> ManagerId100"
 					]
 				}
 			},
