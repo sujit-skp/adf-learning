@@ -1,0 +1,9 @@
+{
+	"name": "adf-skp",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "b79cc83e-00fa-481f-ae3f-18ad6cd64d09",
+		"tenantId": "a4d9c50c-a07a-4b1d-b187-1ac274eba8a3"
+	}
+}
