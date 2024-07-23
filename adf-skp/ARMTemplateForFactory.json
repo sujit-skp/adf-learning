@@ -721,7 +721,7 @@
 						"          Value as string,",
 						"          Industry_code_ANZSIC06 as string",
 						"     ),",
-						"     partitionFileNames:['ManagerId100FilteredRecords'],",
+						"     partitionFileNames:['ManagerId100FilteredRecords.csv'],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     partitionBy('hash', 1)) ~> ManagerId100"
