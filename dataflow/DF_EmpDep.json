@@ -1,32 +1,91 @@
 {
-	"name": "dataflow1",
+	"name": "DF_EmpDep",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
 				{
-					"name": "source1"
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
+					"name": "EmployeeData"
 				},
 				{
-					"name": "source2"
+					"dataset": {
+						"referenceName": "DepartmentData",
+						"type": "DatasetReference"
+					},
+					"name": "DeparmentData"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "JoinedDataEmpDep",
+						"type": "DatasetReference"
+					},
+					"name": "OutputData",
+					"rejectedDataLinkedService": {
+						"referenceName": "FilesStorage",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
 			"transformations": [
 				{
-					"name": "join1"
+					"name": "JoinEmpDepData"
 				}
 			],
 			"scriptLines": [
-				"source(allowSchemaDrift: true,",
-				"     validateSchema: false) ~> source1",
-				"source(allowSchemaDrift: true,",
-				"     validateSchema: false) ~> source2",
-				"source1, source2 join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"source(output(",
+				"          EMPLOYEE_ID as string,",
+				"          FIRST_NAME as string,",
+				"          LAST_NAME as string,",
+				"          EMAIL as string,",
+				"          PHONE_NUMBER as string,",
+				"          HIRE_DATE as string,",
+				"          JOB_ID as string,",
+				"          SALARY as string,",
+				"          COMMISSION_PCT as string,",
+				"          MANAGER_ID as string,",
+				"          DEPARTMENT_ID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmployeeData",
+				"source(output(",
+				"          DEPARTMENT_ID as string,",
+				"          DEPARTMENT_NAME as string,",
+				"          MANAGER_ID as string,",
+				"          LOCATION_ID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> DeparmentData",
+				"EmployeeData, DeparmentData join(EmployeeData@DEPARTMENT_ID == DeparmentData@DEPARTMENT_ID,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join1"
+				"     broadcast: 'auto')~> JoinEmpDepData",
+				"JoinEmpDepData sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Year as string,",
+				"          Industry_aggregation_NZSIOC as string,",
+				"          Industry_code_NZSIOC as string,",
+				"          Industry_name_NZSIOC as string,",
+				"          Units as string,",
+				"          Variable_code as string,",
+				"          Variable_name as string,",
+				"          Variable_category as string,",
+				"          Value as string,",
+				"          Industry_code_ANZSIC06 as string",
+				"     ),",
+				"     partitionFileNames:['JoinedDataEmpDep'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> OutputData"
 			]
 		}
 	}
