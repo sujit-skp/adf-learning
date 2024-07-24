@@ -76,6 +76,34 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DerivedNewColumnData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "outputfiles",
+						"container": "filescontaineradf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/EmployeeData')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -385,6 +413,34 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/OutPutDataSet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "outputfiles",
+						"container": "filescontaineradf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/TotalAggEmployee')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -495,34 +551,6 @@
 						}
 					}
 				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DerivedNewColumnData')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "FilesStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"folderPath": "outputfiles",
-						"container": "filescontaineradf"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
@@ -845,6 +873,69 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/df_DerivedColumn')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DerivedNewColumnData",
+								"type": "DatasetReference"
+							},
+							"name": "DerivedData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DerivedFirstName"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData derive(FIRST_NAME = upper(FIRST_NAME),",
+						"          NewFirstName = iif(COMMISSION_PCT==' - ','New','Old')) ~> DerivedFirstName",
+						"DerivedFirstName sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['DerivedNewColumnData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> DerivedData"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
+				"[concat(variables('factoryId'), '/datasets/DerivedNewColumnData')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_EmpDep')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -935,143 +1026,6 @@
 				"[concat(variables('factoryId'), '/datasets/DepartmentData')]",
 				"[concat(variables('factoryId'), '/datasets/JoinedDataEmpDep')]",
 				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/df_FilterEmp')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "EmpData"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "FilteredManagerId100",
-								"type": "DatasetReference"
-							},
-							"name": "ManagerId100"
-						}
-					],
-					"transformations": [
-						{
-							"name": "filterPayrollDep"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as string,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as string,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData filter(equals(MANAGER_ID,'100')) ~> filterPayrollDep",
-						"filterPayrollDep sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          Year as string,",
-						"          Industry_aggregation_NZSIOC as string,",
-						"          Industry_code_NZSIOC as string,",
-						"          Industry_name_NZSIOC as string,",
-						"          Units as string,",
-						"          Variable_code as string,",
-						"          Variable_name as string,",
-						"          Variable_category as string,",
-						"          Value as string,",
-						"          Industry_code_ANZSIC06 as string",
-						"     ),",
-						"     partitionFileNames:['ManagerId100FilteredRecords.csv'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> ManagerId100"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
-				"[concat(variables('factoryId'), '/datasets/FilteredManagerId100')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/df_DerivedColumn')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "EmpData"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "DerivedNewColumnData",
-								"type": "DatasetReference"
-							},
-							"name": "DerivedData"
-						}
-					],
-					"transformations": [
-						{
-							"name": "DerivedFirstName"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as string,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as string,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData derive(FIRST_NAME = upper(FIRST_NAME),",
-						"          NewFirstName = iif(COMMISSION_PCT==' - ','New','Old')) ~> DerivedFirstName",
-						"DerivedFirstName sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['DerivedNewColumnData.csv'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> DerivedData"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
-				"[concat(variables('factoryId'), '/datasets/DerivedNewColumnData')]"
 			]
 		}
 	]
