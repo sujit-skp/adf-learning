@@ -76,11 +76,12 @@
 						"     validateSchema: false,",
 						"     ignoreNoFilesFound: false) ~> DepData",
 						"EmpData, DepData exists(EmpData@DEPARTMENT_ID == DepData@DEPARTMENT_ID,",
-						"     negate:false,",
-						"     broadcast: 'auto')~> ExistManagerId",
+						"     negate:true,",
+						"     partitionBy('hash', 1),",
+						"     broadcast: 'both')~> ExistManagerId",
 						"ExistManagerId sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['ExistingDataManagerID'],",
+						"     partitionFileNames:['ExistingDataManagerID.csv'],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     partitionBy('hash', 1)) ~> ExistingData"
@@ -155,6 +156,72 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     partitionBy('hash', 1)) ~> ManagerId100"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_UnionTrans')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ITEmpData",
+								"type": "DatasetReference"
+							},
+							"name": "ITEmpData"
+						},
+						{
+							"dataset": {
+								"referenceName": "HrEmpData",
+								"type": "DatasetReference"
+							},
+							"name": "HREmpData"
+						},
+						{
+							"dataset": {
+								"referenceName": "FinanceEmpData",
+								"type": "DatasetReference"
+							},
+							"name": "FinanceEmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "UnionAllEmpData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "UnionAllEmp"
+						}
+					],
+					"scriptLines": [
+						"source(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> ITEmpData",
+						"source(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> HREmpData",
+						"source(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> FinanceEmpData",
+						"ITEmpData, HREmpData, FinanceEmpData union(byName: true)~> UnionAllEmp",
+						"UnionAllEmp sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['UnionAllEmp.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> UnionAllEmpData"
 					]
 				}
 			},
@@ -401,6 +468,54 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/df_FilterEmp')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/UnionTransformation')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_UnionTrans",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_UnionTrans",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"ITEmpData": {},
+									"HREmpData": {},
+									"FinanceEmpData": {},
+									"UnionAllEmpData": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_UnionTrans')]"
 			]
 		},
 		{
