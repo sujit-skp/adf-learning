@@ -515,6 +515,13 @@
 								"type": "DatasetReference"
 							},
 							"name": "EmpData"
+						},
+						{
+							"dataset": {
+								"referenceName": "DepartmentData",
+								"type": "DatasetReference"
+							},
+							"name": "DepData"
 						}
 					],
 					"sinks": [
@@ -529,6 +536,9 @@
 					"transformations": [
 						{
 							"name": "AggByManagerId"
+						},
+						{
+							"name": "JoinEmpDep"
 						}
 					],
 					"scriptLines": [
@@ -548,9 +558,24 @@
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData aggregate(groupBy(MANAGER_ID,",
-						"          JOB_ID),",
+						"source(output(",
+						"          DEPARTMENT_ID as string,",
+						"          DEPARTMENT_NAME as string,",
+						"          MANAGER_ID as string,",
+						"          LOCATION_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> DepData",
+						"JoinEmpDep aggregate(groupBy(EmpData@MANAGER_ID,",
+						"          JOB_ID,",
+						"          DEPARTMENT_NAME),",
 						"     TotalAggEmployee = count(EMPLOYEE_ID)) ~> AggByManagerId",
+						"EmpData, DepData join(EmpData@DEPARTMENT_ID == DepData@DEPARTMENT_ID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinEmpDep",
 						"AggByManagerId sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     partitionFileNames:['TotalAggEmployee.csv'],",
@@ -567,6 +592,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
+				"[concat(variables('factoryId'), '/datasets/DepartmentData')]",
 				"[concat(variables('factoryId'), '/datasets/TotalAggEmployee')]"
 			]
 		},
@@ -762,6 +788,7 @@
 								"parameters": {},
 								"datasetParameters": {
 									"EmpData": {},
+									"DepData": {},
 									"TotalAggEmployee": {}
 								}
 							},
