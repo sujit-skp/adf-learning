@@ -60,11 +60,11 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> DepData",
 				"EmpData, DepData exists(EmpData@DEPARTMENT_ID == DepData@DEPARTMENT_ID,",
-				"     negate:false,",
+				"     negate:true,",
 				"     broadcast: 'auto')~> ExistManagerId",
 				"ExistManagerId sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['ExistingDataManagerID'],",
+				"     partitionFileNames:['ExistingDataManagerID.csv'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     partitionBy('hash', 1)) ~> ExistingData"
