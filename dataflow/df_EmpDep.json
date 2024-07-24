@@ -5,6 +5,10 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
 					"name": "EmployeeData"
 				},
 				{
@@ -52,7 +56,8 @@
 				"          DEPARTMENT_ID as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> EmployeeData",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmployeeData",
 				"source(output(",
 				"          DEPARTMENT_ID as string,",
 				"          DEPARTMENT_NAME as string,",
