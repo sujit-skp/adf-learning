@@ -60,7 +60,7 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> DepData",
 				"EmpData, DepData exists(EmpData@DEPARTMENT_ID == DepData@DEPARTMENT_ID,",
-				"     negate:true,",
+				"     negate:false,",
 				"     partitionBy('hash', 1),",
 				"     broadcast: 'auto')~> ExistManagerId",
 				"ExistManagerId sink(allowSchemaDrift: true,",
