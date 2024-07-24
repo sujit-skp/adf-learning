@@ -17,6 +17,63 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/AggTransformation')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_AggEmpByManagerId",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_AggEmpByManagerId",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpData": {},
+									"TotalAggEmployee": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SrcEmpFile": {
+						"type": "string"
+					},
+					"SrcDepFile": {
+						"type": "string"
+					},
+					"test": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_AggEmpByManagerId')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ExecuteDataFlow')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -36,7 +93,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "DF_EmpDep",
+								"referenceName": "df_EmpDep",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
@@ -60,7 +117,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/DF_EmpDep')]"
+				"[concat(variables('factoryId'), '/dataflows/df_EmpDep')]"
 			]
 		},
 		{
@@ -83,7 +140,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "DF_FilterEmp",
+								"referenceName": "df_FilterEmp",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
@@ -106,7 +163,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/DF_FilterEmp')]"
+				"[concat(variables('factoryId'), '/dataflows/df_FilterEmp')]"
 			]
 		},
 		{
@@ -466,6 +523,34 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/TotalAggEmployee')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "outputfiles",
+						"container": "filescontaineradf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/inputFile')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -567,7 +652,74 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DF_EmpDep')]",
+			"name": "[concat(parameters('factoryName'), '/df_AggEmpByManagerId')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "TotalAggEmployee",
+								"type": "DatasetReference"
+							},
+							"name": "TotalAggEmployee"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AggByManagerId"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData aggregate(groupBy(MANAGER_ID),",
+						"     TotalAggEmployee = count(EMPLOYEE_ID)) ~> AggByManagerId",
+						"AggByManagerId sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['TotalAggEmployee.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          MANAGER_ID,",
+						"          TotalAggEmployee",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> TotalAggEmployee"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
+				"[concat(variables('factoryId'), '/datasets/TotalAggEmployee')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_EmpDep')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -660,7 +812,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DF_FilterEmp')]",
+			"name": "[concat(parameters('factoryName'), '/df_FilterEmp')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
