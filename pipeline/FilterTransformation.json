@@ -13,9 +13,10 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
+				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "DF_FilterEmp",
+						"referenceName": "df_FilterEmp",
 						"type": "DataFlowReference"
 					},
 					"compute": {

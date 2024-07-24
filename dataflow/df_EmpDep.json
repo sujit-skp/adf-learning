@@ -1,5 +1,5 @@
 {
-	"name": "DF_EmpDep",
+	"name": "df_EmpDep",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {

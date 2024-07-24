@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "DF_EmpDep",
+						"referenceName": "df_EmpDep",
 						"type": "DataFlowReference"
 					},
 					"compute": {
