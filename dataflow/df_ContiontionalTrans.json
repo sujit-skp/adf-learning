@@ -12,7 +12,36 @@
 					"name": "EmpData"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ITEmpData",
+						"type": "DatasetReference"
+					},
+					"name": "ITEmpData"
+				},
+				{
+					"dataset": {
+						"referenceName": "HrEmpData",
+						"type": "DatasetReference"
+					},
+					"name": "HREmpData"
+				},
+				{
+					"dataset": {
+						"referenceName": "FinanceEmpData",
+						"type": "DatasetReference"
+					},
+					"name": "FinanceEmpData"
+				},
+				{
+					"dataset": {
+						"referenceName": "OtherEmpData",
+						"type": "DatasetReference"
+					},
+					"name": "OtherEmpData"
+				}
+			],
 			"transformations": [
 				{
 					"name": "SplitOnDeparment"
@@ -38,7 +67,31 @@
 				"EmpData split(equals(DEPARTMENT_ID,'60'),",
 				"     equals(DEPARTMENT_ID,'40'),",
 				"     equals(DEPARTMENT_ID,'100'),",
-				"     disjoint: false) ~> SplitOnDeparment@(ITEmployees, HREmployees, FinanceEmployees, OtherEmployee)"
+				"     disjoint: false) ~> SplitOnDeparment@(ITEmployees, HREmployees, FinanceEmployees, OtherEmployee)",
+				"SplitOnDeparment@ITEmployees sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['ITEmployeeData.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> ITEmpData",
+				"SplitOnDeparment@HREmployees sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['HrEmpData.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> HREmpData",
+				"SplitOnDeparment@FinanceEmployees sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['FinanceEmpData.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> FinanceEmpData",
+				"SplitOnDeparment@OtherEmployee sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['OtherEmpData.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> OtherEmpData"
 			]
 		}
 	}

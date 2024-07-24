@@ -1,0 +1,23 @@
+{
+	"name": "OtherEmpData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "FilesStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "outputfiles",
+				"container": "filescontaineradf"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
