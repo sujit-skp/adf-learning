@@ -221,7 +221,12 @@
 							"secureOutput": false,
 							"secureInput": false
 						},
-						"userProperties": [],
+						"userProperties": [
+							{
+								"name": "srcFileName",
+								"value": "filescontaineradf/inputfiles/Employee.csv"
+							}
+						],
 						"typeProperties": {
 							"dataflow": {
 								"referenceName": "df_DerivedColumn",
