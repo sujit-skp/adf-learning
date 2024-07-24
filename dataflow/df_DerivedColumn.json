@@ -5,6 +5,10 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
 					"name": "EmpData"
 				}
 			],
@@ -37,7 +41,8 @@
 				"          DEPARTMENT_ID as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> EmpData",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpData",
 				"EmpData derive(FIRST_NAME = upper(FIRST_NAME),",
 				"          NewFirstName = iif(COMMISSION_PCT==' - ','New','Old')) ~> DerivedFirstName",
 				"DerivedFirstName sink(allowSchemaDrift: true,",
