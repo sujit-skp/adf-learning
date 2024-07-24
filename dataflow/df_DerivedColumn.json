@@ -12,7 +12,15 @@
 					"name": "EmpData"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DerivedNewColumnData",
+						"type": "DatasetReference"
+					},
+					"name": "DerivedData"
+				}
+			],
 			"transformations": [
 				{
 					"name": "DerivedFirstName"
@@ -36,7 +44,13 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> EmpData",
 				"EmpData derive(FIRST_NAME = upper(FIRST_NAME),",
-				"          NewFirstName = iif(COMMISSION_PCT==' - ','New','Old')) ~> DerivedFirstName"
+				"          NewFirstName = iif(COMMISSION_PCT==' - ','New','Old')) ~> DerivedFirstName",
+				"DerivedFirstName sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['DerivedNewColumnData.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> DerivedData"
 			]
 		}
 	}
