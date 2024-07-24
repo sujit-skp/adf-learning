@@ -43,7 +43,8 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> EmpData",
-				"EmpData aggregate(groupBy(MANAGER_ID),",
+				"EmpData aggregate(groupBy(MANAGER_ID,",
+				"          JOB_ID),",
 				"     TotalAggEmployee = count(EMPLOYEE_ID)) ~> AggByManagerId",
 				"AggByManagerId sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -52,7 +53,8 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     mapColumn(",
 				"          MANAGER_ID,",
-				"          TotalAggEmployee",
+				"          TotalAggEmployee,",
+				"          JOB_ID",
 				"     ),",
 				"     partitionBy('hash', 1)) ~> TotalAggEmployee"
 			]
