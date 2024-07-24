@@ -1,0 +1,43 @@
+{
+	"name": "AggTransformation",
+	"properties": {
+		"activities": [
+			{
+				"name": "df_AggEmpByManagerId",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_AggEmpByManagerId",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"parameters": {
+			"SrcEmpFile": {
+				"type": "string"
+			},
+			"SrcDepFile": {
+				"type": "string"
+			},
+			"test": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}
