@@ -584,7 +584,8 @@
 						"     mapColumn(",
 						"          MANAGER_ID,",
 						"          TotalAggEmployee,",
-						"          JOB_ID",
+						"          JOB_ID,",
+						"          DEPARTMENT_NAME",
 						"     ),",
 						"     partitionBy('hash', 1)) ~> TotalAggEmployee"
 					]
