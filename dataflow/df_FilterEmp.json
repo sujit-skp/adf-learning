@@ -5,6 +5,10 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
 					"name": "EmpData"
 				}
 			],
@@ -37,7 +41,8 @@
 				"          DEPARTMENT_ID as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> EmpData",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpData",
 				"EmpData filter(equals(MANAGER_ID,'100')) ~> filterPayrollDep",
 				"filterPayrollDep sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",

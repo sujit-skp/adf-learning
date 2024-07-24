@@ -5,6 +5,10 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
 					"name": "EmpData"
 				}
 			],
@@ -58,7 +62,8 @@
 				"          DEPARTMENT_ID as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> EmpData",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmpData",
 				"EmpData split(equals(DEPARTMENT_ID,'60'),",
 				"     equals(DEPARTMENT_ID,'40'),",
 				"     equals(DEPARTMENT_ID,'100'),",
