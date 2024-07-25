@@ -1,5 +1,11 @@
 {
 	"name": "adf-skp",
+	"properties": {
+		"globalConfigurations": {
+			"factoryStagingLSReferenceName": "FilesStorage",
+			"factoryStagingLSType": "LinkedServiceReference"
+		}
+	},
 	"location": "eastus",
 	"identity": {
 		"type": "SystemAssigned",
