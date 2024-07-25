@@ -1,0 +1,22 @@
+{
+	"name": "DevDb",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "MySql",
+		"typeProperties": {
+			"server": "127.0.0.1",
+			"port": 3306,
+			"database": "skp",
+			"username": "root",
+			"sslMode": 1,
+			"useSystemTrustStore": 0,
+			"driverVersion": "v2",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI2ZTZkNWRjNy0yOWQwLTRiMjMtYWZkOC03MTY2MjdhNDUwNzUiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "LocallyHosted",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
