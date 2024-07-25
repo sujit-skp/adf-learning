@@ -1,0 +1,15 @@
+{
+	"name": "DB_AggData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DevDb",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "MySqlTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": "adf_AggData"
+		}
+	}
+}
