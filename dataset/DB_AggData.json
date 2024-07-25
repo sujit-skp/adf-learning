@@ -9,7 +9,7 @@
 		"type": "MySqlTable",
 		"schema": [],
 		"typeProperties": {
-			"tableName": "adf_AggData"
+			"tableName": "actor"
 		}
 	}
 }
