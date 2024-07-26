@@ -5,8 +5,20 @@
 		"factoryName": {
 			"value": "adf-skp"
 		},
+		"DevDb_password": {
+			"value": ""
+		},
 		"FilesStorage_connectionString": {
 			"value": ""
+		},
+		"DevDb_properties_typeProperties_server": {
+			"value": "127.0.0.1"
+		},
+		"DevDb_properties_typeProperties_database": {
+			"value": "skp"
+		},
+		"DevDb_properties_typeProperties_username": {
+			"value": "root"
 		},
 		"containerUri": {
 			"value": ""
