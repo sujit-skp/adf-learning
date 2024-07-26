@@ -1,0 +1,12 @@
+{
+	"name": "Testds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dev_db",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	}
+}
