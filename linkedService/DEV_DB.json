@@ -1,0 +1,14 @@
+{
+	"name": "DEV_DB",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "skp-server.database.windows.net",
+			"database": "dev-skp",
+			"encrypt": "mandatory",
+			"trustServerCertificate": true,
+			"authenticationType": "SystemAssignedManagedIdentity"
+		}
+	}
+}
