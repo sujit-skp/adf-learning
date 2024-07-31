@@ -1,0 +1,63 @@
+{
+	"name": "Emp_Altered",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_DevDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "empid",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "empFirstName",
+				"type": "varchar"
+			},
+			{
+				"name": "empLastName",
+				"type": "varchar"
+			},
+			{
+				"name": "EMAIL",
+				"type": "varchar"
+			},
+			{
+				"name": "PHONE_NUMBER",
+				"type": "varchar"
+			},
+			{
+				"name": "HIRE_DATE",
+				"type": "varchar"
+			},
+			{
+				"name": "JOB_ID",
+				"type": "varchar"
+			},
+			{
+				"name": "SALARY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "COMMISSION_PCT",
+				"type": "varchar"
+			},
+			{
+				"name": "MANAGER_ID",
+				"type": "varchar"
+			},
+			{
+				"name": "DEPARTMENT_ID",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Emp_Altered"
+		}
+	}
+}

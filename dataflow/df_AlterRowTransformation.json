@@ -15,10 +15,10 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "OutPutDataSet",
+						"referenceName": "Emp_Altered",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "EmpAltered"
 				}
 			],
 			"transformations": [
@@ -28,14 +28,14 @@
 			],
 			"scriptLines": [
 				"source(output(",
-				"          EMPLOYEE_ID as string,",
+				"          EMPLOYEE_ID as integer,",
 				"          FIRST_NAME as string,",
 				"          LAST_NAME as string,",
 				"          EMAIL as string,",
 				"          PHONE_NUMBER as string,",
 				"          HIRE_DATE as string,",
 				"          JOB_ID as string,",
-				"          SALARY as string,",
+				"          SALARY as integer,",
 				"          COMMISSION_PCT as string,",
 				"          MANAGER_ID as string,",
 				"          DEPARTMENT_ID as string",
@@ -43,11 +43,43 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> EmpData",
-				"EmpData alterRow(deleteIf(DEPARTMENT_ID =='50')) ~> alterRow",
+				"EmpData alterRow(deleteIf(DEPARTMENT_ID=='50')) ~> alterRow",
 				"alterRow sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     input(",
+				"          empid as integer,",
+				"          empFirstName as string,",
+				"          empLastName as string,",
+				"          EMAIL as string,",
+				"          PHONE_NUMBER as string,",
+				"          HIRE_DATE as string,",
+				"          JOB_ID as string,",
+				"          SALARY as integer,",
+				"          COMMISSION_PCT as string,",
+				"          MANAGER_ID as string,",
+				"          DEPARTMENT_ID as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          empid = EMPLOYEE_ID,",
+				"          empFirstName = FIRST_NAME,",
+				"          empLastName = LAST_NAME,",
+				"          EMAIL,",
+				"          PHONE_NUMBER,",
+				"          HIRE_DATE,",
+				"          JOB_ID,",
+				"          SALARY,",
+				"          COMMISSION_PCT,",
+				"          MANAGER_ID,",
+				"          DEPARTMENT_ID",
+				"     )) ~> EmpAltered"
 			]
 		}
 	}
