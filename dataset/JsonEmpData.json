@@ -1,0 +1,59 @@
+{
+	"name": "JsonEmpData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "FilesStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "EmpData.json",
+				"folderPath": "inputfiles",
+				"container": "filescontaineradf"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"empId": {
+					"type": "string"
+				},
+				"jobTitle": {
+					"type": "string"
+				},
+				"fullName": {
+					"type": "string"
+				},
+				"Skills": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"address": {
+					"type": "object",
+					"properties": {
+						"City": {
+							"type": "string"
+						},
+						"Statte": {
+							"type": "string"
+						},
+						"Country": {
+							"type": "string"
+						}
+					}
+				},
+				"contact": {
+					"type": "string"
+				},
+				"email": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}
