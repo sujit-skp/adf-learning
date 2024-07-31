@@ -11,17 +11,13 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'FilesStorage'"
 		},
+		"LS_DevDB_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_DevDB'"
+		},
 		"DevDb_password": {
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'DevDb'"
-		},
-		"DEV_DB_properties_typeProperties_server": {
-			"type": "string",
-			"defaultValue": "skp-server.database.windows.net"
-		},
-		"DEV_DB_properties_typeProperties_database": {
-			"type": "string",
-			"defaultValue": "dev-skp"
 		},
 		"DevDb_properties_typeProperties_server": {
 			"type": "string",
@@ -40,23 +36,6 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
-		{
-			"name": "[concat(parameters('factoryName'), '/DEV_DB')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"server": "[parameters('DEV_DB_properties_typeProperties_server')]",
-					"database": "[parameters('DEV_DB_properties_typeProperties_database')]",
-					"encrypt": "mandatory",
-					"trustServerCertificate": true,
-					"authenticationType": "SystemAssignedManagedIdentity"
-				}
-			},
-			"dependsOn": []
-		},
 		{
 			"name": "[concat(parameters('factoryName'), '/FilesStorage')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -77,6 +56,19 @@
 			"properties": {
 				"type": "SelfHosted",
 				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_DevDB')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_DevDB_connectionString')]"
+				}
 			},
 			"dependsOn": []
 		},
@@ -637,6 +629,74 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Emp_Altered')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_DevDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "empid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "empFirstName",
+						"type": "varchar"
+					},
+					{
+						"name": "empLastName",
+						"type": "varchar"
+					},
+					{
+						"name": "EMAIL",
+						"type": "varchar"
+					},
+					{
+						"name": "PHONE_NUMBER",
+						"type": "varchar"
+					},
+					{
+						"name": "HIRE_DATE",
+						"type": "varchar"
+					},
+					{
+						"name": "JOB_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "SALARY",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "COMMISSION_PCT",
+						"type": "varchar"
+					},
+					{
+						"name": "MANAGER_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "DEPARTMENT_ID",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Emp_Altered"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_DevDB')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/copydata')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -747,26 +807,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/inputFile')]",
 				"[concat(variables('factoryId'), '/datasets/outputfile')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DB_AggData')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "DevDb",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "MySqlTable",
-				"schema": [],
-				"typeProperties": {
-					"tableName": "actor"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/DevDb')]"
 			]
 		}
 	]

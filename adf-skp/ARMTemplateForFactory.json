@@ -15,13 +15,9 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'FilesStorage'"
 		},
-		"DEV_DB_properties_typeProperties_server": {
-			"type": "string",
-			"defaultValue": "skp-server.database.windows.net"
-		},
-		"DEV_DB_properties_typeProperties_database": {
-			"type": "string",
-			"defaultValue": "dev-skp"
+		"LS_DevDB_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_DevDB'"
 		},
 		"DevDb_properties_typeProperties_server": {
 			"type": "string",
@@ -1094,23 +1090,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DEV_DB')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"server": "[parameters('DEV_DB_properties_typeProperties_server')]",
-					"database": "[parameters('DEV_DB_properties_typeProperties_database')]",
-					"encrypt": "mandatory",
-					"trustServerCertificate": true,
-					"authenticationType": "SystemAssignedManagedIdentity"
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/DevDb')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -1256,6 +1235,98 @@
 				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
 				"[concat(variables('factoryId'), '/datasets/DepartmentData')]",
 				"[concat(variables('factoryId'), '/datasets/TotalAggEmployee')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_AlterRowTransformation')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Emp_Altered",
+								"type": "DatasetReference"
+							},
+							"name": "EmpAltered"
+						}
+					],
+					"transformations": [
+						{
+							"name": "alterRow"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as integer,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as integer,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData alterRow(deleteIf(DEPARTMENT_ID=='50')) ~> alterRow",
+						"alterRow sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          empid as integer,",
+						"          empFirstName as string,",
+						"          empLastName as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as integer,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          empid = EMPLOYEE_ID,",
+						"          empFirstName = FIRST_NAME,",
+						"          empLastName = LAST_NAME,",
+						"          EMAIL,",
+						"          PHONE_NUMBER,",
+						"          HIRE_DATE,",
+						"          JOB_ID,",
+						"          SALARY,",
+						"          COMMISSION_PCT,",
+						"          MANAGER_ID,",
+						"          DEPARTMENT_ID",
+						"     )) ~> EmpAltered"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
+				"[concat(variables('factoryId'), '/datasets/Emp_Altered')]"
 			]
 		},
 		{
@@ -1907,6 +1978,89 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/df_SurrogateKeyTrans')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "EmpDataWithSurrogateKey"
+						}
+					],
+					"transformations": [
+						{
+							"name": "NewSurrogateKey"
+						},
+						{
+							"name": "RearrangeColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData keyGenerate(output(NewSurrogateKey as long),",
+						"     startAt: 1L,",
+						"     stepValue: 1L) ~> NewSurrogateKey",
+						"NewSurrogateKey select(mapColumn(",
+						"          NewSurrogateKey,",
+						"          EMPLOYEE_ID,",
+						"          FIRST_NAME,",
+						"          LAST_NAME,",
+						"          EMAIL,",
+						"          PHONE_NUMBER,",
+						"          HIRE_DATE,",
+						"          JOB_ID,",
+						"          SALARY,",
+						"          COMMISSION_PCT,",
+						"          MANAGER_ID,",
+						"          DEPARTMENT_ID",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> RearrangeColumns",
+						"RearrangeColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['EmpDataWithSurrogateKey.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> EmpDataWithSurrogateKey"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
+				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_UnionTrans')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1974,6 +2128,70 @@
 				"[concat(variables('factoryId'), '/datasets/ITEmpData')]",
 				"[concat(variables('factoryId'), '/datasets/HrEmpData')]",
 				"[concat(variables('factoryId'), '/datasets/FinanceEmpData')]",
+				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_WindowsTransformstion')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "DenseRankData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "WindowsTrans"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as integer,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as integer,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData window(over(DEPARTMENT_ID),",
+						"     desc(SALARY, true),",
+						"     DenseRank = denseRank()) ~> WindowsTrans",
+						"WindowsTrans sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['DenseRankData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> DenseRankData"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
 				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
 			]
 		},
@@ -2142,150 +2360,130 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/df_SurrogateKeyTrans')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
+			"name": "[concat(parameters('factoryName'), '/LS_DevDB')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"type": "MappingDataFlow",
+				"annotations": [],
+				"type": "AzureSqlDatabase",
 				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "EmpData"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "OutPutDataSet",
-								"type": "DatasetReference"
-							},
-							"name": "EmpDataWithSurrogateKey"
-						}
-					],
-					"transformations": [
-						{
-							"name": "NewSurrogateKey"
-						},
-						{
-							"name": "RearrangeColumns"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as string,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as string,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData keyGenerate(output(NewSurrogateKey as long),",
-						"     startAt: 1L,",
-						"     stepValue: 1L) ~> NewSurrogateKey",
-						"NewSurrogateKey select(mapColumn(",
-						"          NewSurrogateKey,",
-						"          EMPLOYEE_ID,",
-						"          FIRST_NAME,",
-						"          LAST_NAME,",
-						"          EMAIL,",
-						"          PHONE_NUMBER,",
-						"          HIRE_DATE,",
-						"          JOB_ID,",
-						"          SALARY,",
-						"          COMMISSION_PCT,",
-						"          MANAGER_ID,",
-						"          DEPARTMENT_ID",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> RearrangeColumns",
-						"RearrangeColumns sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['EmpDataWithSurrogateKey.csv'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> EmpDataWithSurrogateKey"
-					]
+					"connectionString": "[parameters('LS_DevDB_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Emp_Altered')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_DevDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "empid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "empFirstName",
+						"type": "varchar"
+					},
+					{
+						"name": "empLastName",
+						"type": "varchar"
+					},
+					{
+						"name": "EMAIL",
+						"type": "varchar"
+					},
+					{
+						"name": "PHONE_NUMBER",
+						"type": "varchar"
+					},
+					{
+						"name": "HIRE_DATE",
+						"type": "varchar"
+					},
+					{
+						"name": "JOB_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "SALARY",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "COMMISSION_PCT",
+						"type": "varchar"
+					},
+					{
+						"name": "MANAGER_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "DEPARTMENT_ID",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Emp_Altered"
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
-				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_DevDB')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/df_WindowsTransformstion')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
+			"name": "[concat(parameters('factoryName'), '/Alteredtransformation')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
+				"activities": [
+					{
+						"name": "df_AlterRowTransformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_AlterRowTransformation",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpData": {},
+									"EmpAltered": {}
+								}
 							},
-							"name": "EmpData"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "OutPutDataSet",
-								"type": "DatasetReference"
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
 							},
-							"name": "DenseRankData"
+							"traceLevel": "Fine"
 						}
-					],
-					"transformations": [
-						{
-							"name": "WindowsTrans"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as integer,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as integer,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData window(over(DEPARTMENT_ID),",
-						"     desc(SALARY, true),",
-						"     DenseRank = denseRank()) ~> WindowsTrans",
-						"WindowsTrans sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['DenseRankData.csv'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> DenseRankData"
-					]
-				}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
-				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+				"[concat(variables('factoryId'), '/dataflows/df_AlterRowTransformation')]"
 			]
 		}
 	]

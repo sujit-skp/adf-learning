@@ -11,11 +11,8 @@
 		"FilesStorage_connectionString": {
 			"value": ""
 		},
-		"DEV_DB_properties_typeProperties_server": {
-			"value": "skp-server.database.windows.net"
-		},
-		"DEV_DB_properties_typeProperties_database": {
-			"value": "dev-skp"
+		"LS_DevDB_connectionString": {
+			"value": ""
 		},
 		"DevDb_properties_typeProperties_server": {
 			"value": "127.0.0.1"

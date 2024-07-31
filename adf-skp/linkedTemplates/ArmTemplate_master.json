@@ -15,13 +15,9 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'FilesStorage'"
 		},
-		"DEV_DB_properties_typeProperties_server": {
-			"type": "string",
-			"defaultValue": "skp-server.database.windows.net"
-		},
-		"DEV_DB_properties_typeProperties_database": {
-			"type": "string",
-			"defaultValue": "dev-skp"
+		"LS_DevDB_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_DevDB'"
 		},
 		"DevDb_properties_typeProperties_server": {
 			"type": "string",
@@ -65,14 +61,11 @@
 					"FilesStorage_connectionString": {
 						"value": "[parameters('FilesStorage_connectionString')]"
 					},
+					"LS_DevDB_connectionString": {
+						"value": "[parameters('LS_DevDB_connectionString')]"
+					},
 					"DevDb_password": {
 						"value": "[parameters('DevDb_password')]"
-					},
-					"DEV_DB_properties_typeProperties_server": {
-						"value": "[parameters('DEV_DB_properties_typeProperties_server')]"
-					},
-					"DEV_DB_properties_typeProperties_database": {
-						"value": "[parameters('DEV_DB_properties_typeProperties_database')]"
 					},
 					"DevDb_properties_typeProperties_server": {
 						"value": "[parameters('DevDb_properties_typeProperties_server')]"
