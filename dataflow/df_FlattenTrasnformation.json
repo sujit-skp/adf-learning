@@ -15,10 +15,7 @@
 			"sinks": [],
 			"transformations": [],
 			"scriptLines": [
-				"source(output(",
-				"          Employees as (empId as string, jobTitle as string, fullName as string, Skills as string[], address as (City as string, Statte as string, Country as string), contact as string, email as string)[]",
-				"     ),",
-				"     allowSchemaDrift: true,",
+				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
 				"     documentForm: 'singleDocument') ~> JsonEmpData"
