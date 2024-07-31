@@ -6,7 +6,7 @@
 		"typeProperties": {
 			"server": "skp-server.database.windows.net",
 			"database": "dev-skp",
-			"encrypt": "mandatory",
+			"encrypt": "optional",
 			"trustServerCertificate": true,
 			"authenticationType": "SystemAssignedManagedIdentity"
 		}
