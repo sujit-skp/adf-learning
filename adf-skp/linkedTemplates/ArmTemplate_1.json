@@ -169,7 +169,8 @@
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData alterRow(deleteIf(DEPARTMENT_ID=='50')) ~> alterRow",
+						"EmpData alterRow(deleteIf(DEPARTMENT_ID=='50'),",
+						"     updateIf(DEPARTMENT_ID == '20')) ~> alterRow",
 						"alterRow sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
@@ -187,8 +188,9 @@
 						"     ),",
 						"     deletable:false,",
 						"     insertable:true,",
-						"     updateable:false,",
+						"     updateable:true,",
 						"     upsertable:false,",
+						"     keys:['empid'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -1250,6 +1252,52 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Alteredtransformation')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_AlterRowTransformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_AlterRowTransformation",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpData": {},
+									"EmpAltered": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_AlterRowTransformation')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DerviedColumnTrans')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1345,53 +1393,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/df_EmpDep')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ExistingDataTrans')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "df_ExistNotExist",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "df_ExistNotExist",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"EmpData": {},
-									"DepData": {},
-									"ExistingData": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/df_ExistNotExist')]"
 			]
 		}
 	]
