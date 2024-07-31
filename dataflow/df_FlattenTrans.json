@@ -1,0 +1,34 @@
+{
+	"name": "df_FlattenTrans",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "JsonEmpData",
+						"type": "DatasetReference"
+					},
+					"name": "JsonEmpData"
+				}
+			],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          empId as string,",
+				"          jobTitle as string,",
+				"          fullName as string,",
+				"          Skills as string[],",
+				"          address as (City as string, Statte as string, Country as string),",
+				"          contact as string,",
+				"          email as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'singleDocument') ~> JsonEmpData"
+			]
+		}
+	}
+}
