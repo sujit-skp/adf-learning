@@ -18,7 +18,7 @@
 						"referenceName": "OutPutDataSet",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "SchemaValidation"
 				}
 			],
 			"transformations": [],
@@ -44,7 +44,7 @@
 				"     partitionFileNames:['SchemaValidation.csv'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> sink1"
+				"     partitionBy('hash', 1)) ~> SchemaValidation"
 			]
 		}
 	}
