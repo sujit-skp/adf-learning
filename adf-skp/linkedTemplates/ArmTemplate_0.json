@@ -697,116 +697,48 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/copydata')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/MetaData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "inputfiles",
+						"container": "filescontaineradf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
 					{
-						"name": "srctotgt",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "BinarySource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"deleteFilesAfterCompletion": false
-								},
-								"formatSettings": {
-									"type": "BinaryReadSettings"
-								}
-							},
-							"sink": {
-								"type": "BinarySink",
-								"storeSettings": {
-									"type": "AzureBlobStorageWriteSettings",
-									"copyBehavior": "FlattenHierarchy"
-								}
-							},
-							"enableStaging": false
-						},
-						"inputs": [
-							{
-								"referenceName": "inputFile",
-								"type": "DatasetReference",
-								"parameters": {
-									"containerName": {
-										"value": "@pipeline().parameters.containerName",
-										"type": "Expression"
-									},
-									"folderName": {
-										"value": "@pipeline().parameters.srcfoldername",
-										"type": "Expression"
-									},
-									"sourcefileName": {
-										"value": "@pipeline().parameters.sourcefileName",
-										"type": "Expression"
-									}
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "outputfile",
-								"type": "DatasetReference",
-								"parameters": {
-									"containername": {
-										"value": "@pipeline().parameters.containerName",
-										"type": "Expression"
-									},
-									"foldername": {
-										"value": "@pipeline().parameters.tragetfoldername",
-										"type": "Expression"
-									},
-									"targetfilename": {
-										"value": "@pipeline().parameters.targetfileName",
-										"type": "Expression"
-									}
-								}
-							}
-						]
+						"name": "DEPARTMENT_ID",
+						"type": "String"
+					},
+					{
+						"name": "DEPARTMENT_NAME",
+						"type": "String"
+					},
+					{
+						"name": "MANAGER_ID",
+						"type": "String"
+					},
+					{
+						"name": "LOCATION_ID",
+						"type": "String"
 					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"containerName": {
-						"type": "string",
-						"defaultValue": "filescontaineradf"
-					},
-					"sourcefileName": {
-						"type": "string",
-						"defaultValue": "testinput.csv"
-					},
-					"targetfileName": {
-						"type": "string",
-						"defaultValue": "testoutput.csv"
-					},
-					"srcfoldername": {
-						"type": "string",
-						"defaultValue": "inputfiles"
-					},
-					"tragetfoldername": {
-						"type": "string",
-						"defaultValue": "outputfiles"
-					}
-				},
-				"annotations": []
+				]
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/inputFile')]",
-				"[concat(variables('factoryId'), '/datasets/outputfile')]"
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
 			]
 		}
 	]
