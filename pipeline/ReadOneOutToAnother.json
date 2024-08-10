@@ -76,6 +76,8 @@
 				"type": "String"
 			}
 		},
-		"annotations": []
+		"annotations": [
+			"Data"
+		]
 	}
 }

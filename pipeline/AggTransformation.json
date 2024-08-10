@@ -38,6 +38,8 @@
 				"type": "string"
 			}
 		},
-		"annotations": []
+		"annotations": [
+			"Data"
+		]
 	}
 }
