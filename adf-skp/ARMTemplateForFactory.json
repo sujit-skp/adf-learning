@@ -88,7 +88,9 @@
 						"type": "string"
 					}
 				},
-				"annotations": []
+				"annotations": [
+					"Data"
+				]
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/df_AggEmpByManagerId')]"
@@ -376,6 +378,99 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/df_LookupTransformation')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ReadOneOutToAnother')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata Childlist",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "MetaData",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEachChilList",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata Childlist",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata Childlist').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Set variable1",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "FileName",
+										"value": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"FileName": {
+						"type": "String"
+					}
+				},
+				"annotations": [
+					"Data"
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/MetaData')]"
 			]
 		},
 		{
@@ -1072,6 +1167,51 @@
 					"quoteChar": "\""
 				},
 				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MetaData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "inputfiles",
+						"container": "filescontaineradf"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "DEPARTMENT_ID",
+						"type": "String"
+					},
+					{
+						"name": "DEPARTMENT_NAME",
+						"type": "String"
+					},
+					{
+						"name": "MANAGER_ID",
+						"type": "String"
+					},
+					{
+						"name": "LOCATION_ID",
+						"type": "String"
+					}
+				]
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
@@ -2592,97 +2732,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ReadOneOutToAnother')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Get Metadata Childlist",
-						"type": "GetMetadata",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "MetaData",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "DelimitedTextReadSettings"
-							}
-						}
-					},
-					{
-						"name": "ForEachChilList",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Get Metadata Childlist",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Get Metadata Childlist').output.childItems",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "Set variable1",
-									"type": "SetVariable",
-									"dependsOn": [],
-									"policy": {
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "FileName",
-										"value": {
-											"value": "@item().name",
-											"type": "Expression"
-										}
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"FileName": {
-						"type": "String"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/MetaData')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/MetaData')]",
+			"name": "[concat(parameters('factoryName'), '/skpjson')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -2691,39 +2741,108 @@
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
-				"type": "DelimitedText",
+				"type": "Json",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"fileName": "NewEmp.json",
 						"folderPath": "inputfiles",
 						"container": "filescontaineradf"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "DEPARTMENT_ID",
-						"type": "String"
-					},
-					{
-						"name": "DEPARTMENT_NAME",
-						"type": "String"
-					},
-					{
-						"name": "MANAGER_ID",
-						"type": "String"
-					},
-					{
-						"name": "LOCATION_ID",
-						"type": "String"
 					}
-				]
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"skills": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"contact": {
+							"type": "object",
+							"properties": {
+								"mobile": {
+									"type": "string"
+								},
+								"email": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "skpjson",
+								"type": "DatasetReference"
+							},
+							"name": "skpJson"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "Output"
+						}
+					],
+					"transformations": [
+						{
+							"name": "stringifyContatc"
+						},
+						{
+							"name": "ConvertNewContactToString"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          skills as string[],",
+						"          contact as (mobile as string, email as string)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> skpJson",
+						"skpJson stringify(NewContact = contact ? string,",
+						"     format: 'json') ~> stringifyContatc",
+						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
+						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          name,",
+						"          skills,",
+						"          NewContact",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Output"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/skpjson')]",
+				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
 			]
 		}
 	]

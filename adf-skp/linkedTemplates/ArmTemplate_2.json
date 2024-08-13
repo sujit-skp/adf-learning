@@ -13,6 +13,126 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "skpjson",
+								"type": "DatasetReference"
+							},
+							"name": "skpJson"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "Output"
+						}
+					],
+					"transformations": [
+						{
+							"name": "stringifyContatc"
+						},
+						{
+							"name": "ConvertNewContactToString"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          skills as string[],",
+						"          contact as (mobile as string, email as string)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> skpJson",
+						"skpJson stringify(NewContact = contact ? string,",
+						"     format: 'json') ~> stringifyContatc",
+						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
+						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          name,",
+						"          skills,",
+						"          NewContact",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Output"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AggTransformation')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_AggEmpByManagerId",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_AggEmpByManagerId",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpData": {},
+									"DepData": {},
+									"TotalAggEmployee": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SrcEmpFile": {
+						"type": "string"
+					},
+					"SrcDepFile": {
+						"type": "string"
+					},
+					"test": {
+						"type": "string"
+					}
+				},
+				"annotations": [
+					"Data"
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Alteredtransformation')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
