@@ -1,0 +1,59 @@
+{
+	"name": "df_Stringify",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "skpjson",
+						"type": "DatasetReference"
+					},
+					"name": "skpJson"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "OutPutDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "Output"
+				}
+			],
+			"transformations": [
+				{
+					"name": "stringifyContatc"
+				},
+				{
+					"name": "ConvertNewContactToString"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          name as string,",
+				"          skills as string[],",
+				"          contact as (mobile as string, email as string)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'documentPerLine') ~> skpJson",
+				"skpJson stringify(NewContact = contact ? string,",
+				"     format: 'json') ~> stringifyContatc",
+				"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
+				"ConvertNewContactToString sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['StringyiFyData.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          name,",
+				"          skills,",
+				"          NewContact",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> Output"
+			]
+		}
+	}
+}
