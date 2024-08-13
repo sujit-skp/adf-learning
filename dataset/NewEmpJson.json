@@ -1,0 +1,53 @@
+{
+	"name": "NewEmpJson",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "FilesStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "NewEmp.json",
+				"folderPath": "inputfiles",
+				"container": "filescontaineradf"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"employees": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"userName": {
+								"type": "string"
+							},
+							"jobTitleName": {
+								"type": "string"
+							},
+							"employeeCode": {
+								"type": "string"
+							},
+							"techstack": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							},
+							"emailAddress": {
+								"type": "string"
+							},
+							"image": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
