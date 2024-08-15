@@ -13,6 +13,164 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/df_WindowsTransformstion')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "DenseRankData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "WindowsTrans"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as integer,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as integer,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData window(over(DEPARTMENT_ID),",
+						"     desc(SALARY, true),",
+						"     DenseRank = denseRank()) ~> WindowsTrans",
+						"WindowsTrans sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['DenseRankData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> DenseRankData"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_newBranchCreation')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						},
+						{
+							"dataset": {
+								"referenceName": "DepartmentData",
+								"type": "DatasetReference"
+							},
+							"name": "DepData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "JoinedData"
+						},
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "CountOfEmployee"
+						}
+					],
+					"transformations": [
+						{
+							"name": "CountEmpInDep"
+						},
+						{
+							"name": "JoinEmpDepData"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"source(output(",
+						"          DEPARTMENT_ID as string,",
+						"          DEPARTMENT_NAME as string,",
+						"          MANAGER_ID as string,",
+						"          LOCATION_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> DepData",
+						"EmpData aggregate(groupBy(DEPARTMENT_ID),",
+						"     TotalEmployee = count(EMPLOYEE_ID)) ~> CountEmpInDep",
+						"EmpData, DepData join(EmpData@DEPARTMENT_ID == DepData@DEPARTMENT_ID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinEmpDepData",
+						"JoinEmpDepData sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['JoinedData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> JoinedData",
+						"CountEmpInDep sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Coutofemp.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> CountOfEmployee"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/fd_SortTransformation')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -73,7 +231,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/df_AssertTrasnformation')]",
+			"name": "[concat(parameters('factoryName'), '/df_UserDefinedFn')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -85,14 +243,7 @@
 								"referenceName": "EmployeeData",
 								"type": "DatasetReference"
 							},
-							"name": "empData"
-						},
-						{
-							"dataset": {
-								"referenceName": "DepartmentData",
-								"type": "DatasetReference"
-							},
-							"name": "DepData"
+							"name": "EmpData"
 						}
 					],
 					"sinks": [
@@ -101,18 +252,18 @@
 								"referenceName": "OutPutDataSet",
 								"type": "DatasetReference"
 							},
-							"name": "AssertCheckOut"
+							"name": "IfElseCheck"
 						}
 					],
 					"transformations": [
 						{
-							"name": "AssertCheckHireDate"
-						},
+							"name": "dcIfElseCheck"
+						}
+					],
+					"udfLibraries": [
 						{
-							"name": "dcErrorCheck"
-						},
-						{
-							"name": "filterGoodRows"
+							"referenceName": "StringFn",
+							"type": "DataFlowReference"
 						}
 					],
 					"scriptLines": [
@@ -131,28 +282,14 @@
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> empData",
-						"source(output(",
-						"          DEPARTMENT_ID as string,",
-						"          DEPARTMENT_NAME as string,",
-						"          MANAGER_ID as string,",
-						"          LOCATION_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData derive(JOB_ID1 = JobiDinEmp(JOB_ID)) ~> dcIfElseCheck",
+						"dcIfElseCheck sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> DepData",
-						"empData, DepData assert(expectTrue(!isNull(toDate(HIRE_DATE,'dd-MMM-yy')), false, 'assertHireDate', null, 'check hire date format for all rows'),",
-						"     expectUnique(EMPLOYEE_ID, false, 'assertUniqueEmpId', null, 'check unique emp id'),",
-						"     expectExists(empData@DEPARTMENT_ID == DepData@DEPARTMENT_ID, false, 'assertCheckDep', null, 'check if dept id is presetn in both')) ~> AssertCheckHireDate",
-						"AssertCheckHireDate derive(IsErrorRow = isError(),",
-						"          IsHasErrorInEmpId = hasError('assertUniqueEmpId')) ~> dcErrorCheck",
-						"dcErrorCheck filter(IsErrorRow==false()) ~> filterGoodRows",
-						"filterGoodRows sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['AssertCheckOut.csv'],",
+						"     partitionFileNames:['IfElseCheck.csv'],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> AssertCheckOut"
+						"     partitionBy('hash', 1)) ~> IfElseCheck"
 					]
 				}
 			},
@@ -167,6 +304,8 @@
 					{
 						"name": "df_AggEmpByManagerId",
 						"type": "ExecuteDataFlow",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
@@ -193,6 +332,35 @@
 								"computeType": "General"
 							},
 							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Script1",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "LS_DevDB",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "select * from dbo.Emp_Altered\nPRINT 'query executed'"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00",
+							"logSettings": {
+								"logDestination": "ActivityOutput"
+							}
 						}
 					}
 				],

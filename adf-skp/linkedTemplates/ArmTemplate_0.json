@@ -57,6 +57,23 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/StringFn')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "UDFLibrary",
+				"typeProperties": {
+					"sources": [],
+					"sinks": [],
+					"transformations": [],
+					"scriptLines": [
+						"JobiDinEmp(string) as integer = iif(i1=='ST_CLERK',1,iif(i1=='ST_MAN',2,3))"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DepartmentData')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -688,55 +705,6 @@
 						"container": {
 							"value": "@dataset().containername",
 							"type": "Expression"
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/skpjson')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "FilesStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "NewEmp.json",
-						"folderPath": "inputfiles",
-						"container": "filescontaineradf"
-					}
-				},
-				"schema": {
-					"type": "object",
-					"properties": {
-						"name": {
-							"type": "string"
-						},
-						"skills": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						},
-						"contact": {
-							"type": "object",
-							"properties": {
-								"mobile": {
-									"type": "string"
-								},
-								"email": {
-									"type": "string"
-								}
-							}
 						}
 					}
 				}
