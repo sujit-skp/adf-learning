@@ -1,0 +1,60 @@
+{
+	"name": "df_AssertTrasnformation",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
+					"name": "empData"
+				},
+				{
+					"dataset": {
+						"referenceName": "DepartmentData",
+						"type": "DatasetReference"
+					},
+					"name": "DepData"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "AssertCheckHireDate"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          EMPLOYEE_ID as string,",
+				"          FIRST_NAME as string,",
+				"          LAST_NAME as string,",
+				"          EMAIL as string,",
+				"          PHONE_NUMBER as string,",
+				"          HIRE_DATE as string,",
+				"          JOB_ID as string,",
+				"          SALARY as string,",
+				"          COMMISSION_PCT as string,",
+				"          MANAGER_ID as string,",
+				"          DEPARTMENT_ID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> empData",
+				"source(output(",
+				"          DEPARTMENT_ID as string,",
+				"          DEPARTMENT_NAME as string,",
+				"          MANAGER_ID as string,",
+				"          LOCATION_ID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> DepData",
+				"empData, DepData assert(expectTrue(!isNull(toDate(HIRE_DATE,'dd-MMM-yy')), false, 'assertHireDate', null, 'check hire date format for all rows'),",
+				"     expectUnique(EMPLOYEE_ID, false, 'assertUniqueEmpId', null, 'check unique emp id'),",
+				"     expectExists(empData@DEPARTMENT_ID == DepData@DEPARTMENT_ID, false, 'assertCheckDep', null, 'check if dept id is presetn in both')) ~> AssertCheckHireDate"
+			]
+		}
+	}
+}
