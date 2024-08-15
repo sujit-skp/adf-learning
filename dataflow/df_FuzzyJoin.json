@@ -1,0 +1,65 @@
+{
+	"name": "df_FuzzyJoin",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Sales1",
+						"type": "DatasetReference"
+					},
+					"name": "sales1"
+				},
+				{
+					"dataset": {
+						"referenceName": "Sales2",
+						"type": "DatasetReference"
+					},
+					"name": "sales2"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "OutPutDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FuzzyJoin"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          name as string,",
+				"          item as string,",
+				"          quantity as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sales1",
+				"source(output(",
+				"          name as string,",
+				"          item as string,",
+				"          quantity as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sales2",
+				"sales1, sales2 join(fuzzyCompare(sales1@name, sales2@name, 62.00),",
+				"     joinType:'inner',",
+				"     matchType:'fuzzy',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'off')~> FuzzyJoin",
+				"FuzzyJoin sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
+			]
+		}
+	}
+}
