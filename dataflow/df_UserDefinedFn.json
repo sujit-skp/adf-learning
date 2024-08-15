@@ -18,12 +18,18 @@
 						"referenceName": "OutPutDataSet",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "IfElseCheck"
 				}
 			],
 			"transformations": [
 				{
 					"name": "dcIfElseCheck"
+				}
+			],
+			"udfLibraries": [
+				{
+					"referenceName": "StringFn",
+					"type": "DataFlowReference"
 				}
 			],
 			"scriptLines": [
@@ -43,11 +49,13 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> EmpData",
-				"EmpData derive(JOB_ID1 = iif(JOB_ID=='ST_CLERK',1,iif(JOB_ID=='ST_MAN',2,3))) ~> dcIfElseCheck",
+				"EmpData derive(JOB_ID1 = JobiDinEmp(JOB_ID)) ~> dcIfElseCheck",
 				"dcIfElseCheck sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     partitionFileNames:['IfElseCheck.csv'],",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> IfElseCheck"
 			]
 		}
 	}
