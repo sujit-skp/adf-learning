@@ -1390,6 +1390,55 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/skpjson')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "NewEmp.json",
+						"folderPath": "inputfiles",
+						"container": "filescontaineradf"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"skills": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"contact": {
+							"type": "object",
+							"properties": {
+								"mobile": {
+									"type": "string"
+								},
+								"email": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DevDb')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -2293,6 +2342,71 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "skpjson",
+								"type": "DatasetReference"
+							},
+							"name": "skpJson"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "Output"
+						}
+					],
+					"transformations": [
+						{
+							"name": "stringifyContatc"
+						},
+						{
+							"name": "ConvertNewContactToString"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          skills as string[],",
+						"          contact as (mobile as string, email as string)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> skpJson",
+						"skpJson stringify(NewContact = contact ? string,",
+						"     format: 'json') ~> stringifyContatc",
+						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
+						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          name,",
+						"          skills,",
+						"          NewContact",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Output"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/skpjson')]",
+				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_SurrogateKeyTrans')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -2732,56 +2846,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/skpjson')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "FilesStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "NewEmp.json",
-						"folderPath": "inputfiles",
-						"container": "filescontaineradf"
-					}
-				},
-				"schema": {
-					"type": "object",
-					"properties": {
-						"name": {
-							"type": "string"
-						},
-						"skills": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						},
-						"contact": {
-							"type": "object",
-							"properties": {
-								"mobile": {
-									"type": "string"
-								},
-								"email": {
-									"type": "string"
-								}
-							}
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"name": "[concat(parameters('factoryName'), '/df_AssertTrasnformation')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -2790,10 +2855,17 @@
 					"sources": [
 						{
 							"dataset": {
-								"referenceName": "skpjson",
+								"referenceName": "EmployeeData",
 								"type": "DatasetReference"
 							},
-							"name": "skpJson"
+							"name": "empData"
+						},
+						{
+							"dataset": {
+								"referenceName": "DepartmentData",
+								"type": "DatasetReference"
+							},
+							"name": "DepData"
 						}
 					],
 					"sinks": [
@@ -2802,46 +2874,64 @@
 								"referenceName": "OutPutDataSet",
 								"type": "DatasetReference"
 							},
-							"name": "Output"
+							"name": "AssertCheckOut"
 						}
 					],
 					"transformations": [
 						{
-							"name": "stringifyContatc"
+							"name": "AssertCheckHireDate"
 						},
 						{
-							"name": "ConvertNewContactToString"
+							"name": "dcErrorCheck"
+						},
+						{
+							"name": "filterGoodRows"
 						}
 					],
 					"scriptLines": [
 						"source(output(",
-						"          name as string,",
-						"          skills as string[],",
-						"          contact as (mobile as string, email as string)",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'documentPerLine') ~> skpJson",
-						"skpJson stringify(NewContact = contact ? string,",
-						"     format: 'json') ~> stringifyContatc",
-						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
-						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     ignoreNoFilesFound: false) ~> empData",
+						"source(output(",
+						"          DEPARTMENT_ID as string,",
+						"          DEPARTMENT_NAME as string,",
+						"          MANAGER_ID as string,",
+						"          LOCATION_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     ignoreNoFilesFound: false) ~> DepData",
+						"empData, DepData assert(expectTrue(!isNull(toDate(HIRE_DATE,'dd-MMM-yy')), false, 'assertHireDate', null, 'check hire date format for all rows'),",
+						"     expectUnique(EMPLOYEE_ID, false, 'assertUniqueEmpId', null, 'check unique emp id'),",
+						"     expectExists(empData@DEPARTMENT_ID == DepData@DEPARTMENT_ID, false, 'assertCheckDep', null, 'check if dept id is presetn in both')) ~> AssertCheckHireDate",
+						"AssertCheckHireDate derive(IsErrorRow = isError(),",
+						"          IsHasErrorInEmpId = hasError('assertUniqueEmpId')) ~> dcErrorCheck",
+						"dcErrorCheck filter(IsErrorRow==false()) ~> filterGoodRows",
+						"filterGoodRows sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['AssertCheckOut.csv'],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     mapColumn(",
-						"          name,",
-						"          skills,",
-						"          NewContact",
-						"     ),",
-						"     partitionBy('hash', 1)) ~> Output"
+						"     partitionBy('hash', 1)) ~> AssertCheckOut"
 					]
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/skpjson')]",
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
+				"[concat(variables('factoryId'), '/datasets/DepartmentData')]",
 				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
 			]
 		}

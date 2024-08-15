@@ -13,7 +13,7 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"name": "[concat(parameters('factoryName'), '/fd_SortTransformation')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -22,10 +22,10 @@
 					"sources": [
 						{
 							"dataset": {
-								"referenceName": "skpjson",
+								"referenceName": "EmployeeData",
 								"type": "DatasetReference"
 							},
-							"name": "skpJson"
+							"name": "EmpData"
 						}
 					],
 					"sinks": [
@@ -34,41 +34,125 @@
 								"referenceName": "OutPutDataSet",
 								"type": "DatasetReference"
 							},
-							"name": "Output"
+							"name": "SortedData"
 						}
 					],
 					"transformations": [
 						{
-							"name": "stringifyContatc"
-						},
-						{
-							"name": "ConvertNewContactToString"
+							"name": "SortFirstNameAsseding"
 						}
 					],
 					"scriptLines": [
 						"source(output(",
-						"          name as string,",
-						"          skills as string[],",
-						"          contact as (mobile as string, email as string)",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     documentForm: 'documentPerLine') ~> skpJson",
-						"skpJson stringify(NewContact = contact ? string,",
-						"     format: 'json') ~> stringifyContatc",
-						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
-						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData sort(asc(FIRST_NAME, true),",
+						"     caseInsensitive: true) ~> SortFirstNameAsseding",
+						"SortFirstNameAsseding sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     partitionFileNames:['FirstNameSortedData.csv'],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     mapColumn(",
-						"          name,",
-						"          skills,",
-						"          NewContact",
+						"     partitionBy('hash', 1)) ~> SortedData"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_AssertTrasnformation')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "empData"
+						},
+						{
+							"dataset": {
+								"referenceName": "DepartmentData",
+								"type": "DatasetReference"
+							},
+							"name": "DepData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "AssertCheckOut"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AssertCheckHireDate"
+						},
+						{
+							"name": "dcErrorCheck"
+						},
+						{
+							"name": "filterGoodRows"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
 						"     ),",
-						"     partitionBy('hash', 1)) ~> Output"
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> empData",
+						"source(output(",
+						"          DEPARTMENT_ID as string,",
+						"          DEPARTMENT_NAME as string,",
+						"          MANAGER_ID as string,",
+						"          LOCATION_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> DepData",
+						"empData, DepData assert(expectTrue(!isNull(toDate(HIRE_DATE,'dd-MMM-yy')), false, 'assertHireDate', null, 'check hire date format for all rows'),",
+						"     expectUnique(EMPLOYEE_ID, false, 'assertUniqueEmpId', null, 'check unique emp id'),",
+						"     expectExists(empData@DEPARTMENT_ID == DepData@DEPARTMENT_ID, false, 'assertCheckDep', null, 'check if dept id is presetn in both')) ~> AssertCheckHireDate",
+						"AssertCheckHireDate derive(IsErrorRow = isError(),",
+						"          IsHasErrorInEmpId = hasError('assertUniqueEmpId')) ~> dcErrorCheck",
+						"dcErrorCheck filter(IsErrorRow==false()) ~> filterGoodRows",
+						"filterGoodRows sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['AssertCheckOut.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> AssertCheckOut"
 					]
 				}
 			},

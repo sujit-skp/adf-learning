@@ -14,22 +14,6 @@
 		"LS_DevDB_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_DevDB'"
-		},
-		"DevDb_password": {
-			"type": "secureString",
-			"metadata": "Secure string for 'password' of 'DevDb'"
-		},
-		"DevDb_properties_typeProperties_server": {
-			"type": "string",
-			"defaultValue": "127.0.0.1"
-		},
-		"DevDb_properties_typeProperties_database": {
-			"type": "string",
-			"defaultValue": "skp"
-		},
-		"DevDb_properties_typeProperties_username": {
-			"type": "string",
-			"defaultValue": "root"
 		}
 	},
 	"variables": {
@@ -713,32 +697,52 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DevDb')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"name": "[concat(parameters('factoryName'), '/skpjson')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"annotations": [],
-				"type": "MySql",
-				"typeProperties": {
-					"server": "[parameters('DevDb_properties_typeProperties_server')]",
-					"port": 3306,
-					"database": "[parameters('DevDb_properties_typeProperties_database')]",
-					"username": "[parameters('DevDb_properties_typeProperties_username')]",
-					"sslMode": 1,
-					"useSystemTrustStore": 0,
-					"password": {
-						"type": "SecureString",
-						"value": "[parameters('DevDb_password')]"
-					},
-					"driverVersion": "v2"
+				"linkedServiceName": {
+					"referenceName": "FilesStorage",
+					"type": "LinkedServiceReference"
 				},
-				"connectVia": {
-					"referenceName": "LocallyHosted",
-					"type": "IntegrationRuntimeReference"
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "NewEmp.json",
+						"folderPath": "inputfiles",
+						"container": "filescontaineradf"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"skills": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"contact": {
+							"type": "object",
+							"properties": {
+								"mobile": {
+									"type": "string"
+								},
+								"email": {
+									"type": "string"
+								}
+							}
+						}
+					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/integrationRuntimes/LocallyHosted')]"
+				"[concat(variables('factoryId'), '/linkedServices/FilesStorage')]"
 			]
 		}
 	]

@@ -6,6 +6,22 @@
 			"type": "string",
 			"metadata": "Data Factory name",
 			"defaultValue": "adf-skp"
+		},
+		"DevDb_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'DevDb'"
+		},
+		"DevDb_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "127.0.0.1"
+		},
+		"DevDb_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "skp"
+		},
+		"DevDb_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "root"
 		}
 	},
 	"variables": {
@@ -13,48 +29,28 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/skpjson')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/DevDb')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"linkedServiceName": {
-					"referenceName": "FilesStorage",
-					"type": "LinkedServiceReference"
-				},
 				"annotations": [],
-				"type": "Json",
+				"type": "MySql",
 				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "NewEmp.json",
-						"folderPath": "inputfiles",
-						"container": "filescontaineradf"
-					}
+					"server": "[parameters('DevDb_properties_typeProperties_server')]",
+					"port": 3306,
+					"database": "[parameters('DevDb_properties_typeProperties_database')]",
+					"username": "[parameters('DevDb_properties_typeProperties_username')]",
+					"sslMode": 1,
+					"useSystemTrustStore": 0,
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('DevDb_password')]"
+					},
+					"driverVersion": "v2"
 				},
-				"schema": {
-					"type": "object",
-					"properties": {
-						"name": {
-							"type": "string"
-						},
-						"skills": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							}
-						},
-						"contact": {
-							"type": "object",
-							"properties": {
-								"mobile": {
-									"type": "string"
-								},
-								"email": {
-									"type": "string"
-								}
-							}
-						}
-					}
+				"connectVia": {
+					"referenceName": "LocallyHosted",
+					"type": "IntegrationRuntimeReference"
 				}
 			},
 			"dependsOn": []
@@ -276,7 +272,9 @@
 					"tableName": "actor"
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DevDb')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/df_AggEmpByManagerId')]",
@@ -1078,6 +1076,68 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "skpjson",
+								"type": "DatasetReference"
+							},
+							"name": "skpJson"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "Output"
+						}
+					],
+					"transformations": [
+						{
+							"name": "stringifyContatc"
+						},
+						{
+							"name": "ConvertNewContactToString"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          skills as string[],",
+						"          contact as (mobile as string, email as string)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> skpJson",
+						"skpJson stringify(NewContact = contact ? string,",
+						"     format: 'json') ~> stringifyContatc",
+						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
+						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          name,",
+						"          skills,",
+						"          NewContact",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Output"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_SurrogateKeyTrans')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1430,66 +1490,6 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     partitionBy('hash', 1)) ~> CountOfEmployee"
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/fd_SortTransformation')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "EmpData"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "OutPutDataSet",
-								"type": "DatasetReference"
-							},
-							"name": "SortedData"
-						}
-					],
-					"transformations": [
-						{
-							"name": "SortFirstNameAsseding"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as string,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as string,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData sort(asc(FIRST_NAME, true),",
-						"     caseInsensitive: true) ~> SortFirstNameAsseding",
-						"SortFirstNameAsseding sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['FirstNameSortedData.csv'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> SortedData"
 					]
 				}
 			},
