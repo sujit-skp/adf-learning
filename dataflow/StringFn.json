@@ -1,0 +1,14 @@
+{
+	"name": "StringFn",
+	"properties": {
+		"type": "UDFLibrary",
+		"typeProperties": {
+			"sources": [],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"JobiDinEmp(string) as integer = iif(i1=='ST_CLERK',1,iif(i1=='ST_MAN',2,3))"
+			]
+		}
+	}
+}
