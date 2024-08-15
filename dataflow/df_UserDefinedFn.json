@@ -12,7 +12,15 @@
 					"name": "EmpData"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "OutPutDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "dcIfElseCheck"
@@ -35,7 +43,11 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> EmpData",
-				"EmpData derive(JOB_ID1 = iif(JOB_ID=='ST_CLERK',1,iif(JOB_ID=='ST_MAN',2,3))) ~> dcIfElseCheck"
+				"EmpData derive(JOB_ID1 = iif(JOB_ID=='ST_CLERK',1,iif(JOB_ID=='ST_MAN',2,3))) ~> dcIfElseCheck",
+				"dcIfElseCheck sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
 			]
 		}
 	}
