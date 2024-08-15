@@ -19,10 +19,24 @@
 					"name": "DepData"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "OutPutDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "AssertCheckOut"
+				}
+			],
 			"transformations": [
 				{
 					"name": "AssertCheckHireDate"
+				},
+				{
+					"name": "dcErrorCheck"
+				},
+				{
+					"name": "filterGoodRows"
 				}
 			],
 			"scriptLines": [
@@ -53,7 +67,16 @@
 				"     ignoreNoFilesFound: false) ~> DepData",
 				"empData, DepData assert(expectTrue(!isNull(toDate(HIRE_DATE,'dd-MMM-yy')), false, 'assertHireDate', null, 'check hire date format for all rows'),",
 				"     expectUnique(EMPLOYEE_ID, false, 'assertUniqueEmpId', null, 'check unique emp id'),",
-				"     expectExists(empData@DEPARTMENT_ID == DepData@DEPARTMENT_ID, false, 'assertCheckDep', null, 'check if dept id is presetn in both')) ~> AssertCheckHireDate"
+				"     expectExists(empData@DEPARTMENT_ID == DepData@DEPARTMENT_ID, false, 'assertCheckDep', null, 'check if dept id is presetn in both')) ~> AssertCheckHireDate",
+				"AssertCheckHireDate derive(IsErrorRow = isError(),",
+				"          IsHasErrorInEmpId = hasError('assertUniqueEmpId')) ~> dcErrorCheck",
+				"dcErrorCheck filter(IsErrorRow==false()) ~> filterGoodRows",
+				"filterGoodRows sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['AssertCheckOut.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> AssertCheckOut"
 			]
 		}
 	}
