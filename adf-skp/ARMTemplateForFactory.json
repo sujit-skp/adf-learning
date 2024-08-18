@@ -762,6 +762,117 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_cdcImplemetation')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_CDC",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_CDC",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CitizenData": {},
+									"CitizensDW": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine",
+							"continuationSettings": {
+								"customizedCheckpointKey": "c115222b-dcfd-4551-818f-97b3f7e67a76"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_CDC')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CitizenData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_DevDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Name",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "citizens"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_DevDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CitizensDW')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_DevDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Name",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "citizensDW"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_DevDB')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DB_AggData')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1913,6 +2024,132 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
 				"[concat(variables('factoryId'), '/datasets/DepartmentData')]",
+				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_CDC')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "CitizenData",
+								"type": "DatasetReference"
+							},
+							"name": "CitizenData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "CitizensDW",
+								"type": "DatasetReference"
+							},
+							"name": "CitizensDW"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          ID as integer,",
+						"          Name as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     enableNativeCdc: true,",
+						"     netChanges: true,",
+						"     skipInitialLoad: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CitizenData",
+						"CitizenData sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          ID as integer,",
+						"          Name as string",
+						"     ),",
+						"     deletable:true,",
+						"     insertable:true,",
+						"     updateable:true,",
+						"     upsertable:true,",
+						"     keys:['ID'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> CitizensDW"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/CitizenData')]",
+				"[concat(variables('factoryId'), '/datasets/CitizensDW')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_CastTransofmration')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "castStringtoInt"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData cast(output(",
+						"          EMPLOYEE_ID as integer,",
+						"          FIRST_NAME as string,",
+						"          HIRE_DATE as date 'dd-MMM-yyyy'",
+						"     ),",
+						"     errors: true) ~> castStringtoInt",
+						"castStringtoInt sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
 				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
 			]
 		},
@@ -3210,68 +3447,271 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/df_CastTransofmration')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
+			"name": "[concat(parameters('factoryName'), '/cdccitizens')]",
+			"type": "Microsoft.DataFactory/factories/adfcdcs",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
+				"SourceConnectionsInfo": [
+					{
+						"SourceEntities": [
+							{
+								"name": "dbo.citizens",
+								"properties": {
+									"schema": [
+										{
+											"name": "ID",
+											"dataType": "integer"
+										},
+										{
+											"name": "Name",
+											"dataType": "string"
+										}
+									],
+									"dslConnectorProperties": [
+										{
+											"name": "schemaName",
+											"value": "dbo"
+										},
+										{
+											"name": "tableName",
+											"value": "citizens"
+										},
+										{
+											"name": "enableNativeCdc",
+											"value": true
+										},
+										{
+											"name": "netChanges",
+											"value": true
+										},
+										{
+											"name": "allowSchemaDrift",
+											"value": false
+										},
+										{
+											"name": "inferDriftedColumnTypes",
+											"value": false
+										}
+									]
+								}
+							}
+						],
+						"Connection": {
+							"linkedService": {
+								"referenceName": "LS_DevDB",
+								"type": "LinkedServiceReference"
 							},
-							"name": "EmpData"
+							"linkedServiceType": "AzureSqlDatabase",
+							"type": "linkedservicetype",
+							"isInlineDataset": true,
+							"commonDslConnectorProperties": [
+								{
+									"name": "allowSchemaDrift",
+									"value": true
+								},
+								{
+									"name": "inferDriftedColumnTypes",
+									"value": true
+								},
+								{
+									"name": "format",
+									"value": "table"
+								},
+								{
+									"name": "store",
+									"value": "sqlserver"
+								},
+								{
+									"name": "databaseType",
+									"value": "databaseType"
+								},
+								{
+									"name": "database",
+									"value": "database"
+								},
+								{
+									"name": "skipInitialLoad",
+									"value": true
+								}
+							]
 						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "OutPutDataSet",
-								"type": "DatasetReference"
+					}
+				],
+				"TargetConnectionsInfo": [
+					{
+						"TargetEntities": [
+							{
+								"name": "dbo.citizensDW",
+								"properties": {
+									"schema": [
+										{
+											"name": "ID",
+											"dataType": "integer"
+										},
+										{
+											"name": "Name",
+											"dataType": "string"
+										}
+									],
+									"dslConnectorProperties": [
+										{
+											"name": "schemaName",
+											"value": "dbo"
+										},
+										{
+											"name": "tableName",
+											"value": "citizensDW"
+										},
+										{
+											"name": "allowSchemaDrift",
+											"value": false
+										},
+										{
+											"name": "inferDriftedColumnTypes",
+											"value": false
+										},
+										{
+											"name": "keys",
+											"value": [
+												"ID"
+											]
+										},
+										{
+											"name": "deletable",
+											"value": true
+										},
+										{
+											"name": "updateable",
+											"value": true
+										},
+										{
+											"name": "upsertable",
+											"value": true
+										},
+										{
+											"name": "defaultToUpsert",
+											"value": true
+										}
+									]
+								}
+							}
+						],
+						"Connection": {
+							"linkedService": {
+								"referenceName": "LS_DevDB",
+								"type": "LinkedServiceReference"
 							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "castStringtoInt"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as string,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as string,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData cast(output(",
-						"          EMPLOYEE_ID as integer,",
-						"          FIRST_NAME as string,",
-						"          HIRE_DATE as date 'dd-MMM-yyyy'",
-						"     ),",
-						"     errors: true) ~> castStringtoInt",
-						"castStringtoInt sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> sink1"
-					]
-				}
+							"linkedServiceType": "AzureSqlDatabase",
+							"type": "linkedservicetype",
+							"isInlineDataset": true,
+							"commonDslConnectorProperties": [
+								{
+									"name": "allowSchemaDrift",
+									"value": true
+								},
+								{
+									"name": "inferDriftedColumnTypes",
+									"value": true
+								},
+								{
+									"name": "format",
+									"value": "table"
+								},
+								{
+									"name": "store",
+									"value": "sqlserver"
+								},
+								{
+									"name": "databaseType",
+									"value": "databaseType"
+								},
+								{
+									"name": "database",
+									"value": "database"
+								},
+								{
+									"name": "deletable",
+									"value": false
+								},
+								{
+									"name": "insertable",
+									"value": true
+								},
+								{
+									"name": "updateable",
+									"value": false
+								},
+								{
+									"name": "upsertable",
+									"value": false
+								},
+								{
+									"name": "skipDuplicateMapInputs",
+									"value": true
+								},
+								{
+									"name": "skipDuplicateMapOutputs",
+									"value": true
+								}
+							]
+						},
+						"DataMapperMappings": [
+							{
+								"targetEntityName": "dbo.citizensDW",
+								"sourceEntityName": "dbo.citizens",
+								"sourceConnectionReference": {
+									"connectionName": "LS_DevDB",
+									"type": "linkedservicetype"
+								},
+								"attributeMappingInfo": {
+									"attributeMappings": [
+										{
+											"name": "ID",
+											"type": "Direct",
+											"functionName": "",
+											"attributeReference": {
+												"name": "ID",
+												"entity": "dbo.citizens",
+												"entityConnectionReference": {
+													"connectionName": "LS_DevDB",
+													"type": "linkedservicetype"
+												}
+											}
+										},
+										{
+											"name": "Name",
+											"type": "Derived",
+											"functionName": "upper",
+											"expression": "upper(Name)",
+											"attributeReferences": [
+												{
+													"name": "Name",
+													"entity": "dbo.citizens",
+													"entityConnectionReference": {
+														"connectionName": "LS_DevDB",
+														"type": "linkedservicetype"
+													}
+												}
+											]
+										}
+									]
+								}
+							}
+						],
+						"Relationships": []
+					}
+				],
+				"Policy": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 1
+					},
+					"mode": "Microbatch"
+				},
+				"allowVNetOverride": false
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
-				"[concat(variables('factoryId'), '/datasets/OutPutDataSet')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_DevDB')]"
 			]
 		}
 	]

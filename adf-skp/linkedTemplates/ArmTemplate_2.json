@@ -13,6 +13,354 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/df_FuzzyJoin')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "Sales1",
+								"type": "DatasetReference"
+							},
+							"name": "sales1"
+						},
+						{
+							"dataset": {
+								"referenceName": "Sales2",
+								"type": "DatasetReference"
+							},
+							"name": "sales2"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "FuzzyJoin"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          item as string,",
+						"          quantity as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> sales1",
+						"source(output(",
+						"          name as string,",
+						"          item as string,",
+						"          quantity as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> sales2",
+						"sales1, sales2 join(fuzzyCompare(sales1@name, sales2@name, 62.00),",
+						"     joinType:'inner',",
+						"     matchType:'fuzzy',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'off')~> FuzzyJoin",
+						"FuzzyJoin sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_LookupTransformation')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						},
+						{
+							"dataset": {
+								"referenceName": "DepartmentData",
+								"type": "DatasetReference"
+							},
+							"name": "DepData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "LookUpData",
+							"rejectedDataLinkedService": {
+								"referenceName": "FilesStorage",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"transformations": [
+						{
+							"name": "LookupManagerId"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"source(output(",
+						"          DEPARTMENT_ID as string,",
+						"          DEPARTMENT_NAME as string,",
+						"          MANAGER_ID as string,",
+						"          LOCATION_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> DepData",
+						"EmpData, DepData lookup(EmpData@DEPARTMENT_ID == DepData@DEPARTMENT_ID,",
+						"     multiple: false,",
+						"     pickup: 'any',",
+						"     broadcast: 'auto')~> LookupManagerId",
+						"LookupManagerId sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['LookUpData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> LookUpData"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_PivotTrans')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "PivotData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "NumberEmpPerManagerId"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData pivot(groupBy(DEPARTMENT_ID),",
+						"     pivotBy(MANAGER_ID),",
+						"     TotalNbrEmp = count(EMPLOYEE_ID),",
+						"     columnNaming: '$N$V',",
+						"     lateral: true) ~> NumberEmpPerManagerId",
+						"NumberEmpPerManagerId sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['PivotedData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> PivotData"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_SelectTrans')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "EmpData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "ModifiedColumnsNames"
+						}
+					],
+					"transformations": [
+						{
+							"name": "ModifyColumnName"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          EMPLOYEE_ID as string,",
+						"          FIRST_NAME as string,",
+						"          LAST_NAME as string,",
+						"          EMAIL as string,",
+						"          PHONE_NUMBER as string,",
+						"          HIRE_DATE as string,",
+						"          JOB_ID as string,",
+						"          SALARY as string,",
+						"          COMMISSION_PCT as string,",
+						"          MANAGER_ID as string,",
+						"          DEPARTMENT_ID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> EmpData",
+						"EmpData select(mapColumn(",
+						"          EMAIL_nwn = EMAIL,",
+						"          EMPLOYEE_ID_New = EMPLOYEE_ID,",
+						"          FIRST_NAME_New = FIRST_NAME,",
+						"          LAST_NAME_New = LAST_NAME,",
+						"          PHONE_NUMBER,",
+						"          HIRE_DATE,",
+						"          JOB_ID,",
+						"          SALARY,",
+						"          COMMISSION_PCT,",
+						"          MANAGER_ID,",
+						"          DEPARTMENT_ID",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> ModifyColumnName",
+						"ModifyColumnName sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['modyfiedColumnNm.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> ModifiedColumnsNames"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_Stringify')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "skpjson",
+								"type": "DatasetReference"
+							},
+							"name": "skpJson"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "OutPutDataSet",
+								"type": "DatasetReference"
+							},
+							"name": "Output"
+						}
+					],
+					"transformations": [
+						{
+							"name": "stringifyContatc"
+						},
+						{
+							"name": "ConvertNewContactToString"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          skills as string[],",
+						"          contact as (mobile as string, email as string)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> skpJson",
+						"skpJson stringify(NewContact = contact ? string,",
+						"     format: 'json') ~> stringifyContatc",
+						"stringifyContatc derive(NewContact = toString(NewContact)) ~> ConvertNewContactToString",
+						"ConvertNewContactToString sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['StringyiFyData.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          name,",
+						"          skills,",
+						"          NewContact",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Output"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_SurrogateKeyTrans')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -496,68 +844,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/df_CastTransofmration')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "EmpData"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "OutPutDataSet",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "castStringtoInt"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          EMPLOYEE_ID as string,",
-						"          FIRST_NAME as string,",
-						"          LAST_NAME as string,",
-						"          EMAIL as string,",
-						"          PHONE_NUMBER as string,",
-						"          HIRE_DATE as string,",
-						"          JOB_ID as string,",
-						"          SALARY as string,",
-						"          COMMISSION_PCT as string,",
-						"          MANAGER_ID as string,",
-						"          DEPARTMENT_ID as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> EmpData",
-						"EmpData cast(output(",
-						"          EMPLOYEE_ID as integer,",
-						"          FIRST_NAME as string,",
-						"          HIRE_DATE as date 'dd-MMM-yyyy'",
-						"     ),",
-						"     errors: true) ~> castStringtoInt",
-						"castStringtoInt sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/AggTransformation')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -916,7 +1202,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_LookupTransformation')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/SchemaValidationTrans')]",
@@ -963,101 +1251,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/df_ValidateSchema')]"
 			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/UnionTransformation')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "df_UnionTrans",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "df_UnionTrans",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"ITEmpData": {},
-									"HREmpData": {},
-									"FinanceEmpData": {},
-									"UnionAllEmpData": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/df_UnionTrans')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pipeline_ConditionalTrans')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "df_ContiontionalTrans",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "df_ContiontionalTrans",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"EmpData": {},
-									"ITEmpData": {},
-									"HREmpData": {},
-									"FinanceEmpData": {},
-									"OtherEmpData": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": []
 		}
 	]
 }
